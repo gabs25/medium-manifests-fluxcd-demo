@@ -7,7 +7,7 @@ metadata:
     fluxcd.io/automated: "true"
 spec:
   releaseName: fluxcd-demo
-  targetNamespace: fluxcd-demo
+  targetNamespace: opendj-dev
   chart:
     git: git@github.com:gabs25/fluxcd-deployment.git
     path: helm-charts/fluxcd-demo
