@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: opendj
+  name: opendj
+spec:
+  clusterIP: None
+  ports:
+  - port: 1389
+    name: ldap
+  - port: 1636
+    name: ldaps
+  - port: 4444
+    name: admin
+  selector:
+    app: opendj
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: opendj
+  labels:
+    app: opendj
+spec:
+  serviceName: opendj
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opendj
+  template:
+    metadata:
+      labels:
+        app: opendj
+    spec:
+      volumes:
+        - name: opendj-data
+          persistentVolumeClaim:
+            claimName: opendj-pvc
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+      - name: opendj
+        image: openidentityplatform/opendj:4.5.0
+        ports:
+        - containerPort: 1389
+          protocol: TCP
+        - containerPort: 1636
+          protocol: TCP
+        - containerPort: 4444
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - name: opendj-data
+          mountPath: /opt/opendj/data
+        env:
+        - name: ROOT_USER_DN
+          valueFrom:
+            secretKeyRef:
+              name: ldap-root-credentials-secret
+              key: user
+        - name: ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ldap-root-credentials-secret
+              key: password
+        - name: "BASE_DN"
+          value: "o=ptc"
